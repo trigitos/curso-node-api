@@ -1,34 +1,64 @@
-const usuariosGet = (req, res) => {
-    const query = req.query;
+const Usuario = require('../models/usuario');
+const bcrypt = require('bcryptjs');
+const { validationResult } = require('express-validator');
+
+const usuariosGet = async (req, res) => {
+    const {limite = 5, desde = 0} = req.query;
+
+    // const usuarios = await Usuario.find({estado: true})
+    //     .skip(+desde)
+    //     .limit(+limite);
+
+    // const total = await Usuario.countDocuments({estado: true});
+
+    const resp = await Promise.all([
+        Usuario.find({estado: true})
+            .skip(+desde)
+            .limit(+limite),
+        Usuario.countDocuments({estado: true})
+    ])
 
     res.json({
-        msg: 'get API - controlador',
-        query
+        total: resp[1],
+        usuarios: resp[0]
     });
 }
 
-const usuariosPost = (req, res) => {
-    const {nombre, apellidos} = req.body;
+const usuariosPost = async (req, res) => {
+    const {nombre, correo, password, rol} = req.body;
+    const usuario = new Usuario({nombre, correo, password, rol});
+
+    const salt = bcrypt.genSaltSync();
+    usuario.password = bcrypt.hashSync(usuario.password, salt);
+
+    await usuario.save();
 
     res.json({
         msg: 'post API - controlador',
-        nombre,
-        apellidos
+        usuario
     });
 }
 
-const usuariosPut = (req, res) => {
+const usuariosPut = async (req, res) => {
     const id = req.params.id;
+    const { _id, password, google, correo, ...resto } = req.body;
+
+    const usuario = await Usuario.findByIdAndUpdate(id, resto);
 
     res.json({
         msg: 'put API - controlador',
-        id: id
+        usuario
     });
 }
 
-const usuariosDelete = (req, res) => {
+const usuariosDelete = async (req, res) => {
+    const id = req.params.id;
+    // const usuario = await Usuario.findByIdAndRemove(id);
+    const usuario = await Usuario.findByIdAndUpdate(id, { estado: false });
+
+
     res.json({
-        msg: 'delete API - controlador'
+        usuario
     });
 }
 
