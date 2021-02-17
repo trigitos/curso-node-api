@@ -16,7 +16,7 @@ const usuariosGet = async (req, res) => {
             .skip(+desde)
             .limit(+limite),
         Usuario.countDocuments({estado: true})
-    ])
+    ]);
 
     res.json({
         total: resp[1],
